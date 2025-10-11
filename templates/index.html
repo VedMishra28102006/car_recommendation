@@ -1,0 +1,83 @@
+<form id="car_form">
+	<p>Select a car then get recommended similar cars</p>
+	<select id="manufacturer_dropdown" name="Manufacturer">
+		<option hidden selected value="">Manufacturer</option>
+	</select>
+	<select id="model_dropdown" name="Model">
+		<option hidden selected value="">Model</option>
+	</select>
+	<select id="category_dropdown" name="Category">
+		<option hidden selected value="">Category</option>
+	</select>
+	<select id="color_dropdown" name="Color">
+		<option hidden selected value="">Color</option>
+	</select>
+	<button type="submit">Submit</button>
+</form>
+<h1 id="recommend_header" style="display: none">Recommendations:</h1>
+<ul id="recommend_list" style="display: none; list-style-type: none; padding: 0">
+	<h1>Recommendations:</h1>
+</ul>
+<script>
+	var manufacturer_dropdown = document.getElementById("manufacturer_dropdown");
+	var car_data
+	fetch("/options", {method: "GET"})
+		.then(response => response.json())
+		.then(data => {
+			car_data = data;
+			for (manufacturer of Object.keys(data)) {
+				manufacturer_dropdown.innerHTML += `<option value="${manufacturer}">${manufacturer}</option>`;
+			}
+		})
+		.catch(error => {
+			alert(error);
+		});
+	var model_dropdown = document.getElementById("model_dropdown");
+	manufacturer_dropdown.onchange = () => {
+		models = `<option hidden selected value="">Model</option>`;
+		for (model of Object.keys(car_data[manufacturer_dropdown.value])) {
+			models += `<option value="${model}">${model}</option>`;
+		}
+		model_dropdown.innerHTML = models;
+	};
+	var category_dropdown = document.getElementById("category_dropdown");
+	model_dropdown.onchange = () => {
+		categories = `<option hidden selected value="">Category</option>`;
+		for (category of Object.keys(car_data[manufacturer_dropdown.value][model_dropdown.value])) {
+			categories += `<option value=${category}>${category}</option>`;
+		}
+		category_dropdown.innerHTML = categories;
+	};
+	var color_dropdown = document.getElementById("color_dropdown");
+	category_dropdown.onchange = () => {
+		colors = `<option hidden selected value="">Color</option>`;
+		for (color of car_data[manufacturer_dropdown.value][model_dropdown.value][category_dropdown.value]) {
+			colors += `<option value=${color}>${color}</option>`;
+		}
+		color_dropdown.innerHTML = colors;
+	};
+	var page = 1;
+	var car_form = document.getElementById("car_form");
+	var recommend_list = document.getElementById("recommend_list");
+	car_form.onsubmit = (e) => {
+		e.preventDefault();
+		var data = new FormData(car_form);
+		data.append("page", page);
+		fetch("/recommend", {method: "POST", body: data})
+			.then(response => response.json())
+			.then(data => {
+				if (recommend_header.style.display == "none") recommend_header.style.display = "block";
+				recommend_list.style.display = "block";
+				var recommendations = "";
+				for (var i=0; i < data["Manufacturer"].length; i++) {
+					recommendations += `<li>${data["Manufacturer"][i]} ${data["Model"][i]} ${data["Category"][i]} ${data["Color"][i]}</li>`;
+				}
+				recommend_list.innerHTML = recommendations;
+				if (page > 1) recommend_list.innerHTML += `<button onclick="page--;car_form.dispatchEvent(new Event('submit'))">Prev</button>`;
+				if (data.has_more) recommend_list.innerHTML += `<button onclick="page++;car_form.dispatchEvent(new Event('submit'))">Next</button>`;
+			})
+			.catch(error => {
+				alert(error);
+			});
+	};
+</script>
