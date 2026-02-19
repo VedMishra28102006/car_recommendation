@@ -1,83 +1,101 @@
-<form id="car_form">
-	<p>Select a car then get recommended similar cars</p>
-	<select id="manufacturer_dropdown" name="Manufacturer">
-		<option hidden selected value="">Manufacturer</option>
-	</select>
-	<select id="model_dropdown" name="Model">
-		<option hidden selected value="">Model</option>
-	</select>
-	<select id="category_dropdown" name="Category">
-		<option hidden selected value="">Category</option>
-	</select>
-	<select id="color_dropdown" name="Color">
-		<option hidden selected value="">Color</option>
-	</select>
-	<button type="submit">Submit</button>
-</form>
-<h1 id="recommend_header" style="display: none">Recommendations:</h1>
-<ul id="recommend_list" style="display: none; list-style-type: none; padding: 0">
-	<h1>Recommendations:</h1>
-</ul>
-<script>
-	var manufacturer_dropdown = document.getElementById("manufacturer_dropdown");
-	var car_data
-	fetch("/options", {method: "GET"})
-		.then(response => response.json())
-		.then(data => {
-			car_data = data;
-			for (manufacturer of Object.keys(data)) {
-				manufacturer_dropdown.innerHTML += `<option value="${manufacturer}">${manufacturer}</option>`;
-			}
-		})
-		.catch(error => {
-			alert(error);
-		});
-	var model_dropdown = document.getElementById("model_dropdown");
-	manufacturer_dropdown.onchange = () => {
-		models = `<option hidden selected value="">Model</option>`;
-		for (model of Object.keys(car_data[manufacturer_dropdown.value])) {
-			models += `<option value="${model}">${model}</option>`;
-		}
-		model_dropdown.innerHTML = models;
-	};
-	var category_dropdown = document.getElementById("category_dropdown");
-	model_dropdown.onchange = () => {
-		categories = `<option hidden selected value="">Category</option>`;
-		for (category of Object.keys(car_data[manufacturer_dropdown.value][model_dropdown.value])) {
-			categories += `<option value=${category}>${category}</option>`;
-		}
-		category_dropdown.innerHTML = categories;
-	};
-	var color_dropdown = document.getElementById("color_dropdown");
-	category_dropdown.onchange = () => {
-		colors = `<option hidden selected value="">Color</option>`;
-		for (color of car_data[manufacturer_dropdown.value][model_dropdown.value][category_dropdown.value]) {
-			colors += `<option value=${color}>${color}</option>`;
-		}
-		color_dropdown.innerHTML = colors;
-	};
-	var page = 1;
-	var car_form = document.getElementById("car_form");
-	var recommend_list = document.getElementById("recommend_list");
-	car_form.onsubmit = (e) => {
-		e.preventDefault();
-		var data = new FormData(car_form);
-		data.append("page", page);
-		fetch("/recommend", {method: "POST", body: data})
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta content="initial-scale=1.0,width=device-width" name="viewport">
+		<meta content="ie=edge" http-equiv="X-UA-Compatible">
+		<title>Car Recommendation</title>
+	</head>
+	<body onload="
+			let car_form = document.getElementById('car_form');
+			car_data = null;
+			fetch('/options', {method: 'GET'})
 			.then(response => response.json())
 			.then(data => {
-				if (recommend_header.style.display == "none") recommend_header.style.display = "block";
-				recommend_list.style.display = "block";
-				var recommendations = "";
-				for (var i=0; i < data["Manufacturer"].length; i++) {
-					recommendations += `<li>${data["Manufacturer"][i]} ${data["Model"][i]} ${data["Category"][i]} ${data["Color"][i]}</li>`;
-				}
-				recommend_list.innerHTML = recommendations;
-				if (page > 1) recommend_list.innerHTML += `<button onclick="page--;car_form.dispatchEvent(new Event('submit'))">Prev</button>`;
-				if (data.has_more) recommend_list.innerHTML += `<button onclick="page++;car_form.dispatchEvent(new Event('submit'))">Next</button>`;
+				car_data = data;
+				for (manufacturer of Object.keys(data))
+					car_form.querySelector(`select[name='Manufacturer']`).insertAdjacentHTML('beforeend', `<option aria-label='${manufacturer}' value='${manufacturer}'>${manufacturer}</option>`);
+				new_input = car_form.querySelector(`li[id='0']`).innerHTML;
 			})
 			.catch(error => {
 				alert(error);
 			});
-	};
-</script>
+			recommend_list = document.getElementById('recommend_list');
+			page = 1;
+			alter_page = (op) => {
+				page = (op) ? page+1 : page-1;
+				car_form.dispatchEvent(new Event('submit'));
+			};
+	">
+		<form id="car_form" onsubmit="
+			event.preventDefault();
+			let data = new FormData(car_form);
+			data.append('page', page);
+			fetch('/recommend', {method: 'POST', body: data})
+			.then(response => response.json())
+			.then(data => {
+				if (recommend_header.style.display == 'none') recommend_header.style.display = 'block';
+				recommend_list.style.display = 'block';
+				var recommendations = '';
+				for (var i=0; i < data['Manufacturer'].length; i++) {
+					recommendations += `<li>${data['Manufacturer'][i]} ${data['Model'][i]} ${data['Category'][i]} ${data['Color'][i]}</li>`;
+				}
+				recommend_list.innerHTML = recommendations;
+				if (page > 1) recommend_list.innerHTML += `<button aria-label='Previous' onclick='alter_page(0)'>Prev</button>`;
+				if (data.has_more) recommend_list.innerHTML += `<button aria-label='Next' onclick='alter_page(1)'>Next</button>`;
+			})
+			.catch(error => {
+				alert(error);
+			});
+		">
+			<p>Select a car then get recommended similar cars</p>
+			<ul style="
+				list-style-type: none;
+				padding: 0px;
+			">
+				<li aria-label="Input 0" id="0">
+					<select aria-label="Manufacturer" aria-required="true" name="Manufacturer" onchange="
+						this.nextElementSibling.innerHTML = `<option hidden selected value=''>Model</option>`;
+						for (model of Object.keys(car_data[this.value]))
+							this.nextElementSibling.insertAdjacentHTML('beforeend', `<option aria-label='${model}' value='${model}'>${model}</option>`);
+					" required>
+						<option hidden selected value="">Manufacturer</option>
+					</select>
+					<select aria-label="Model" aria-required="true" name="Model" onchange="
+						this.nextElementSibling.innerHTML = `<option hidden selected value=''>Category</option>`;
+						for (category of Object.keys(car_data[this.previousElementSibling.value][this.value]))
+							this.nextElementSibling.insertAdjacentHTML('beforeend', `<option aria-label='${category}' value='${category}'>${category}</option>`);
+					" required>
+						<option hidden selected value="">Model</option>
+					</select>
+					<select aria-label="Category" aria-required="true" name="Category" onchange="
+						this.nextElementSibling.innerHTML = `<option hidden selected value=''>Color</option>`;
+						for (color of car_data[this.previousElementSibling.previousElementSibling.value][this.previousElementSibling.value][this.value])
+							this.nextElementSibling.insertAdjacentHTML('beforeend', `<option aria-label='${color}' value='${color}'>${color}</option>`);
+					" required>
+						<option hidden selected value="">Category</option>
+					</select>
+					<select aria-label="Color" aria-required="true" name="Color" required>
+						<option hidden selected value="">Color</option>
+					</select>
+				</li>
+			</ul>
+			<button aria-label="Add to Cart" onclick="
+				let target = this.previousElementSibling;
+				let children_len = target.children.length;
+				let last_child = target.children[children_len-1];
+				let new_id = parseInt(last_child.id)+1;
+				target.insertAdjacentHTML('beforeend', `<li aria-label='Input ${new_id}' id='${new_id}'>${new_input}</li>`);
+			" type="button">add</button>
+			<button aria-label="Recommend" type="submit">Recommend</button>
+		</form>
+		<h1 id="recommend_header" style="display: none">Recommendations:</h1>
+		<ul id="recommend_list" style="
+			display: none;
+			list-style-type: none;
+			padding: 0px;
+		">
+			<h1>Recommendations:</h1>
+		</ul>
+	</body>
+</html>

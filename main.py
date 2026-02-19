@@ -44,18 +44,17 @@ def options():
 @app.route("/recommend", methods=["POST"])
 def recommend():
 	if request.form and set(["Manufacturer", "Model", "Category", "Color", "page"]).issubset(request.form.keys()):
-		manufacturer = request.form.get("Manufacturer")
-		model = request.form.get("Model")
-		category = request.form.get("Category")
-		color = request.form.get("Color")
+		manufacturers = request.form.getlist("Manufacturer")
+		models = request.form.getlist("Model")
+		categories = request.form.getlist("Category")
+		colors = request.form.getlist("Color")
 		page = int(request.form.get("page"))
 		match = df[
-			(df["Manufacturer"] == manufacturer)
-			& (df["Model"] == model)
-			& (df["Category"] == category)
-			& (df["Color"] == color)
+			df["Manufacturer"].isin(manufacturers)
+			& df["Model"].isin(models)
+			& df["Category"].isin(categories)
+			& df["Color"].isin(colors)
 		]
-		match = match[0:1]
 		input_cat = encoder.transform(match[[
 			"Manufacturer", "Model", "Category", "Leather interior",
 			"Fuel type", "Gear box type", "Drive wheels", "Doors",
@@ -65,15 +64,16 @@ def recommend():
 			"Airbags", "Cylinders", "Engine volume", "Levy",
 			"Mileage", "Price", "Prod. year"
 		]].values)
-		input = np.hstack([input_cat.toarray(), input_num])
+		input_vectors = np.hstack([input_cat.toarray(), input_num])
+		input = input_vectors.mean(axis=0).reshape(1, -1)
 		similarities = cosine_similarity(input, X).flatten()
 		df["similarity"] = similarities
 		cars = df[
 			~(
-				(df["Manufacturer"] == manufacturer)
-				& (df["Model"] == model)
-				& (df["Category"] == category)
-				& (df["Color"] == color)
+				df["Manufacturer"].isin(manufacturers)
+				& df["Model"].isin(models)
+				& df["Category"].isin(categories)
+				& df["Color"].isin(colors)
 			) & (df["similarity"] > 0.5)
 		].sort_values(by="similarity", ascending=False).head(100)
 		cars = cars.drop_duplicates(subset=["Manufacturer", "Model", "Category", "Color"])
