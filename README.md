@@ -4,15 +4,17 @@ A spam email detection app which takes a feature as user input and predicts whet
 
 2. How to run
 
-Install the required packages using
+(i) Install docker cli, if not already installed.
 
-pip install -r requirements.txt
+(ii) Then run
 
-then run
+docker build -t spam_email_detection .
 
-python3 main.py
+(iii) Then run
 
-inside the project's root folder and open the http://localhost:5000/ url.
+docker run -d --name spam_email_detection -p 10000:10000 --rm spam_email_detection
+
+(iv) Open the http://localhost:10000/ url.
 
 3. Dataset
 
