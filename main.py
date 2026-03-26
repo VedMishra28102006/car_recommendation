@@ -6,32 +6,23 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 app = Flask(__name__)
 
-_df = None
-_encoder = None
-_scaler = None
-_X = None
-
-def load_required():
-  global _df, _encoder, _scaler, _X
-  if not _df:
-    _df = pd.read_csv("train.csv")
-    _df = _df.drop("ID", axis=1)
-    _df["Mileage"] = _df["Mileage"].str.replace(" km", "", case=False).astype(float)
-    _df["Levy"] = _df["Levy"].replace("-", 0).astype(float)
-    _df["Engine volume"] = _df["Engine volume"].str.replace(" Turbo", "", case=False).astype(float)
-    _encoder = OneHotEncoder()
-    _scaler = StandardScaler()
-    X_cat = encoder.fit_transform(df[[
-      "Manufacturer", "Model", "Category", "Leather interior",
-      "Fuel type", "Gear box type", "Drive wheels", "Doors",
-      "Wheel", "Color"
-    ]])
-    X_num = scaler.fit_transform(df[[
-      "Airbags", "Cylinders", "Engine volume", "Levy",
-      "Mileage", "Price", "Prod. year"
-    ]].values)
-    _X = np.hstack([X_cat.toarray(), X_num])
-  return _df, _encoder, _scaler, _X
+df = pd.read_csv("train.csv")
+df = df.drop("ID", axis=1)
+df["Mileage"] = df["Mileage"].str.replace(" km", "", case=False).astype(float)
+df["Levy"] = df["Levy"].replace("-", 0).astype(float)
+df["Engine volume"] = df["Engine volume"].str.replace(" Turbo", "", case=False).astype(float)
+encoder = OneHotEncoder()
+scaler = StandardScaler()
+X_cat = encoder.fit_transform(df[[
+  "Manufacturer", "Model", "Category", "Leather interior",
+  "Fuel type", "Gear box type", "Drive wheels", "Doors",
+  "Wheel", "Color"
+]])
+X_num = scaler.fit_transform(df[[
+  "Airbags", "Cylinders", "Engine volume", "Levy",
+  "Mileage", "Price", "Prod. year"
+]].values)
+X = np.hstack([X_cat.toarray(), X_num])
 
 @app.route("/", methods=["GET"])
 def index():
@@ -39,7 +30,6 @@ def index():
 
 @app.route("/options", methods=["GET"])
 def options():
-    df, encoder, scaler, X = load_required()
     options = {}
     groups = df.groupby(["Manufacturer", "Model", "Category"])
     for (manufacturer, model_name, category), group in groups:
@@ -54,7 +44,6 @@ def options():
 @app.route("/recommend", methods=["POST"])
 def recommend():
     if request.form and set(["Manufacturer", "Model", "Category", "Color", "page"]).issubset(request.form.keys()):
-        df, encoder, scaler, X = load_required()
         manufacturers = request.form.getlist("Manufacturer")
         models = request.form.getlist("Model")
         categories = request.form.getlist("Category")
