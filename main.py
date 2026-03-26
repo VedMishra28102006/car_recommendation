@@ -10,8 +10,8 @@ app = Flask(__name__)
 
 def rs_model():
     if os.path.exists("model.pkl"):
-	    with open("model.pkl", "rb") as fd:
-		    model = pickle.load(fd)
+        with open("model.pkl", "rb") as fd:
+        model = pickle.load(fd)
     else:
         df = pd.read_csv("train.csv")
         df = df.drop("ID", axis=1)
@@ -21,19 +21,19 @@ def rs_model():
         encoder = OneHotEncoder()
         scaler = StandardScaler()
         X_cat = encoder.fit_transform(df[[
-	        "Manufacturer", "Model", "Category", "Leather interior",
-	        "Fuel type", "Gear box type", "Drive wheels", "Doors",
-	        "Wheel", "Color"
+            "Manufacturer", "Model", "Category", "Leather interior",
+            "Fuel type", "Gear box type", "Drive wheels", "Doors",
+            "Wheel", "Color"
         ]])
         X_num = scaler.fit_transform(df[[
-	        "Airbags", "Cylinders", "Engine volume", "Levy",
-	        "Mileage", "Price", "Prod. year"
+            "Airbags", "Cylinders", "Engine volume", "Levy",
+            "Mileage", "Price", "Prod. year"
         ]].values)
         X = np.hstack([X_cat.toarray(), X_num])
         model = {"df": df, "encoder": encoder, "scaler": scaler, "X": X}
         with open("model.pkl", "wb") as fd:
-			pickle.dump(model, fd)
-		return model
+            pickle.dump(model, fd)
+        return model
 
 model = rs_model()
 df = model["df"]
