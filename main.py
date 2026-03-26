@@ -15,10 +15,10 @@ def load_required():
   global _df, _encoder, _scaler, _X
   if not _df:
     _df = pd.read_csv("train.csv")
-    _df = df.drop("ID", axis=1)
-    _df["Mileage"] = df["Mileage"].str.replace(" km", "", case=False).astype(float)
-    _df["Levy"] = df["Levy"].replace("-", 0).astype(float)
-    _df["Engine volume"] = df["Engine volume"].str.replace(" Turbo", "", case=False).astype(float)
+    _df = _df.drop("ID", axis=1)
+    _df["Mileage"] = _df["Mileage"].str.replace(" km", "", case=False).astype(float)
+    _df["Levy"] = _df["Levy"].replace("-", 0).astype(float)
+    _df["Engine volume"] = _df["Engine volume"].str.replace(" Turbo", "", case=False).astype(float)
     _encoder = OneHotEncoder()
     _scaler = StandardScaler()
     X_cat = encoder.fit_transform(df[[
