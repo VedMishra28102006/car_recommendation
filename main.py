@@ -1,45 +1,28 @@
 from flask import Flask, jsonify, render_template, request
 import numpy as np
-import os
 import pandas as pd
-import pickle
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 app = Flask(__name__)
 
-def rs_model():
-    if os.path.exists("model.pkl"):
-        with open("model.pkl", "rb") as fd:
-            model = pickle.load(fd)
-    else:
-        df = pd.read_csv("train.csv")
-        df = df.drop("ID", axis=1)
-        df["Mileage"] = df["Mileage"].str.replace(" km", "", case=False).astype(float)
-        df["Levy"] = df["Levy"].replace("-", 0).astype(float)
-        df["Engine volume"] = df["Engine volume"].str.replace(" Turbo", "", case=False).astype(float)
-        encoder = OneHotEncoder()
-        scaler = StandardScaler()
-        X_cat = encoder.fit_transform(df[[
-            "Manufacturer", "Model", "Category", "Leather interior",
-            "Fuel type", "Gear box type", "Drive wheels", "Doors",
-            "Wheel", "Color"
-        ]])
-        X_num = scaler.fit_transform(df[[
-            "Airbags", "Cylinders", "Engine volume", "Levy",
-            "Mileage", "Price", "Prod. year"
-        ]].values)
-        X = np.hstack([X_cat.toarray(), X_num])
-        model = {"df": df, "encoder": encoder, "scaler": scaler, "X": X}
-        with open("model.pkl", "wb") as fd:
-            pickle.dump(model, fd)
-    return model
-
-model = rs_model()
-df = model["df"]
-encoder = model["encoder"]
-scaler = model["scaler"]
-X = model["X"]
+df = pd.read_csv("train.csv")
+df = df.drop("ID", axis=1)
+df["Mileage"] = df["Mileage"].str.replace(" km", "", case=False).astype(float)
+df["Levy"] = df["Levy"].replace("-", 0).astype(float)
+df["Engine volume"] = df["Engine volume"].str.replace(" Turbo", "", case=False).astype(float)
+encoder = OneHotEncoder()
+scaler = StandardScaler()
+X_cat = encoder.fit_transform(df[[
+    "Manufacturer", "Model", "Category", "Leather interior",
+    "Fuel type", "Gear box type", "Drive wheels", "Doors",
+    "Wheel", "Color"
+]])
+X_num = scaler.fit_transform(df[[
+    "Airbags", "Cylinders", "Engine volume", "Levy",
+    "Mileage", "Price", "Prod. year"
+]].values)
+X = np.hstack([X_cat.toarray(), X_num])
 
 @app.route("/", methods=["GET"])
 def index():
