@@ -31,7 +31,7 @@ def rs_model():
         ]].values)
         X = np.hstack([X_cat.toarray(), X_num])
         model = {"df": df, "encoder": encoder, "scaler": scaler, "X": X}
-		with open("model.pkl", "wb") as fd:
+        with open("model.pkl", "wb") as fd:
 			pickle.dump(model, fd)
 		return model
 
