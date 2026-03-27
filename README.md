@@ -1,6 +1,6 @@
 1. Description
 
-A spam email detection app which takes a feature as user input and predicts whether the email is spam or not based on the training dataset.
+A car recommendation app which takes car features as user input and recommends cars based on it.
 
 2. How to run
 
@@ -8,11 +8,11 @@ A spam email detection app which takes a feature as user input and predicts whet
 
 (ii) Then run
 
-docker build -t spam_email_detection .
+docker build -t car_recommendation .
 
 (iii) Then run
 
-docker run -d --name spam_email_detection -p 10000:10000 --rm spam_email_detection
+docker run -d --name car_recommendation -p 10000:10000 --rm car_recommendation
 
 (iv) Open the http://localhost:10000/ url.
 
