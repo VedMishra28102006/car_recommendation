@@ -6,7 +6,7 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 app = Flask(__name__)
 
-df = pd.read_csv("train.csv")
+df = pd.read_csv("train.csv").head(10000)
 df = df.drop("ID", axis=1)
 df["Mileage"] = df["Mileage"].str.replace(" km", "", case=False).astype(float)
 df["Levy"] = df["Levy"].replace("-", 0).astype(float)
